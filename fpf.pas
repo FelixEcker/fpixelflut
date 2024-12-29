@@ -127,6 +127,7 @@ begin
 	sock_addr.sin_family := AF_INET;
 	sock_addr.sin_port := htons(1337);
 	//sock_addr.sin_addr.s_addr := (151 shl 24) + (217 shl 16) + (2 shl 8) + 158;
+	//sock_addr.sin_addr.s_addr := StrToNetAddr('151.217.8.158').s_addr;
 	sock_addr.sin_addr.s_addr := StrToNetAddr('127.0.0.1').s_addr;
 
 	if fpConnect(sock, @sock_addr, sizeof(sock_addr)) < 0 then
@@ -141,7 +142,7 @@ begin
 	SetLength(commands, pixels.width * pixels.height);
 
 	raw_blocks := make_block_array(pixels);
-	//shuffle_block_array(raw_blocks);
+	shuffle_block_array(raw_blocks);
 
 	writeln('block count ', Length(raw_blocks));
 
@@ -156,12 +157,20 @@ begin
 			continue;
 		end;
 
+		commands[wix] := Format('OFFSET %d %d'#10, [block.yorg, block.xorg]);
 		for y := 0 to block.h - 1 do
 		begin
 			for x := 0 to block.w - 1 do
 			begin
 				pix := (y * block.w + x) * 3;
-				commands[wix] := Format('PX %d %d %.2x%.2x%.2x'#10, [(y + block.yorg), x + block.xorg, block.data[pix+2], block.data[pix + 1], block.data[pix]]);
+				commands[wix] := commands[wix] + Format('PX %d %d %.2x%.2x%.2x'#10, [
+					y,
+					x,
+					block.data[pix+2],
+					block.data[pix + 1],
+					block.data[pix]
+				]);
+
 				inc(wix);
 			end;
 		end;
